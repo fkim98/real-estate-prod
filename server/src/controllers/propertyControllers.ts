@@ -206,23 +206,23 @@ export const createProperty = async (
       ...propertyData
     } = req.body;
 
-    const photoUrls = await Promise.all(
-      files.map(async (file) => {
-        const uploadParams = {
-          Bucket: process.env.S3_BUCKET_NAME!,
-          Key: `properties/${Date.now()}-${file.originalname}`,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-        };
+    // const photoUrls = await Promise.all(
+    //   files.map(async (file) => {
+    //     const uploadParams = {
+    //       Bucket: process.env.S3_BUCKET_NAME!,
+    //       Key: `properties/${Date.now()}-${file.originalname}`,
+    //       Body: file.buffer,
+    //       ContentType: file.mimetype,
+    //     };
 
-        const uploadResult = await new Upload({
-          client: s3Client,
-          params: uploadParams,
-        }).done();
+    //     const uploadResult = await new Upload({
+    //       client: s3Client,
+    //       params: uploadParams,
+    //     }).done();
 
-        return uploadResult.Location;
-      })
-    );
+    //     return uploadResult.Location;
+    //   })
+    // );
 
     const geocodingUrl = `https://nominatim.openstreetmap.org/search?${new URLSearchParams(
       {
@@ -251,23 +251,23 @@ export const createProperty = async (
     const [location] = await prisma.$queryRaw<Location[]>`
       INSERT INTO "Location" (address, city, state, country, "postalCode", coordinates)
       VALUES (${address}, ${city}, ${state}, ${country}, ${postalCode}, ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326))
-      RETURNING id, address, city, state, country, "postalCode", ST_asText(coordinates) as coordinates;
+      RETURNING id, address, city, state, country, "postalCode", ST_AsText(coordinates) as coordinates;
     `;
 
     // create property
     const newProperty = await prisma.property.create({
       data: {
         ...propertyData,
-        photoUrls,
+        // photoUrls,
         locationId: location.id,
         managerCognitoId,
         amenities:
           typeof propertyData.amenities === "string"
             ? propertyData.amenities.split(",")
             : [],
-        hightlights:
-          typeof propertyData.hightlights === "string"
-            ? propertyData.hightlights.split(",")
+        highlights:
+          typeof propertyData.highlights === "string"
+            ? propertyData.highlights.split(",")
             : [],
         isPetsAllowed: propertyData.isPetsAllowed === "true",
         isParkingIncluded: propertyData.isParkingIncluded === "true",
